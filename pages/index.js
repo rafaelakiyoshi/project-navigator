@@ -1,58 +1,37 @@
-import { Switch, Card } from "antd";
-import { useThemeSwitcher } from "react-css-theme-switcher";
-import fetcher from "../libs/fetcher";
-import useSWR from "swr";
-import ThemeSwitcher from "../components/ThemeSwitcher";
+import { useState } from "react";
+import { Input, Button } from "antd";
+import Router from "next/router";
+import "./sider.less";
 
-export default function Home({ initialData }) {
-  const { data } = useSWR(URL, fetcher, { initialData });
-  const [isDarkMode, setIsDarkMode] = React.useState();
-  const { switcher, currentTheme, status, themes } = useThemeSwitcher();
+const Home = (props) => {
+  const [url, setUrl] = useState("");
+  console.log("Home -> url", url);
 
-  const toggleTheme = (isChecked) => {
-    setIsDarkMode(isChecked);
-    switcher({ theme: isChecked ? themes.dark : themes.light });
+  const fetchProjectAndPush = (url) => {
+    const [_, information] = url.split("github.com/");
+    const [profile, project] = information.split("/");
+    Router.push({
+      pathname: "/project",
+      query: { profile, project },
+    });
   };
-
-  if (status === "loading") {
-    return null;
-  }
-  console.log(data);
   return (
-    <>
-      <div className="welcome">
-        <Card style={{ width: 300, textAlign: "center", marginTop: "10%" }}>
-          <h1>Hayai!</h1>
-          <h4>Boilerplate</h4>
-          <ThemeSwitcher />
-        </Card>
-        {data && (
-          <>
-            <h6>Forks: {data.forks_count}</h6>
-          </>
-        )}
+    <div className="parent blue">
+      <div className="box coral" contenteditable>
+        <h1>Project Visualization</h1>
+        <Input
+          onPressEnter={() => fetchProjectAndPush(url)}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Past your github project url"
+          style={{ width: 400 }}
+        />
+        <br />
+        <Button onClick={() => fetchProjectAndPush(url)} type="primary">
+          Primary Button
+        </Button>
       </div>
-      <style jsx>{`
-        .welcome {
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        h1 {
-          font-size: 50px;
-          margin-bottom: 0;
-        }
-        h4 {
-          font-size: 20px;
-          margin-top: 0;
-        }
-      `}</style>
-    </>
+    </div>
   );
-}
+};
 
-export async function getServerSideProps() {
-  const data = await fetcher("https://api.github.com/repos/rafaelakiyoshi/hayai");
-  return { props: { initialData: data } };
-}
+export default Home;
