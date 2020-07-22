@@ -21,7 +21,7 @@ const MyApp = props => {
     return (
       <>
         <Head>
-          <title>Hayai Boilerplate</title>
+          <title>Project Visualization</title>
         </Head>
         <ThemeSwitcherProvider themeMap={themes} defaultTheme={theme}>
           {rendered && <Component {...pageProps} />}
