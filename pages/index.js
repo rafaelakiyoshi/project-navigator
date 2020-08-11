@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Input, Button } from "antd";
+import { Input, Form, Spin, Button } from "antd";
 import Router from "next/router";
 import "./sider.less";
 
 const Home = (props) => {
-  const [url, setUrl] = useState("");
-  console.log("Home -> url", url);
+  const [loading, setLoading] = useState(false);
 
-  const fetchProjectAndPush = (url) => {
+  const onFinish = ({ url }) => {
+    setLoading(true);
     const [_, information] = url.split("github.com/");
     const [profile, project] = information.split("/");
     Router.push({
@@ -15,20 +15,42 @@ const Home = (props) => {
       query: { profile, project },
     });
   };
+
+  const onFinishFailed = (errorInfo) => {
+    console.log("Failed:", errorInfo);
+  };
+
   return (
     <div className="parent blue">
-      <div className="box coral" contenteditable>
-        <h1>Project Visualization</h1>
-        <Input
-          onPressEnter={() => fetchProjectAndPush(url)}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Past your github project url"
-          style={{ width: 400 }}
-        />
-        <br />
-        <Button onClick={() => fetchProjectAndPush(url)} type="primary">
-          Primary Button
-        </Button>
+      <div className="box coral">
+        <h1 className="title">Project Visualization</h1>
+        <Form
+          name="basic"
+          initialValues={{ remember: true }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+        >
+          <Form.Item
+            name="url"
+            rules={[{ required: true, message: "Please input your github project url!" }]}
+          >
+            <Input
+              placeholder="Past your github project url"
+              style={{ width: 400 }}
+            />
+          </Form.Item>
+          <br />
+          <Form.Item>
+            <Button
+              loading={loading}
+              type="primary"
+              className="code-btn"
+              htmlType="submit"
+            >
+              Check out the code
+            </Button>
+          </Form.Item>
+        </Form>
       </div>
     </div>
   );
