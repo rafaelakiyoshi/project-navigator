@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useThemeSwitcher } from "react-css-theme-switcher";
 import fetcher from "../libs/fetcher";
 import useSWR from "swr";
-import { Layout, Menu, Tree } from "antd";
+import { Layout, Tree } from "antd";
 import CodeRender from "../components/CodeRender.js";
 import "./sider.less";
 
