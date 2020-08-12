@@ -1,12 +1,15 @@
 import { useState } from "react";
 import fetcher from "../libs/fetcher";
 import useSWR from "swr";
-import { Layout, Tree } from "antd";
+import { Layout, Tree, Tabs } from "antd";
 import CodeRender from "../components/CodeRender.js";
+import IconMapping from "../helpers/IconMapping";
 import "./sider.less";
 
 const { DirectoryTree } = Tree;
 const { Content, Sider } = Layout;
+const { TabPane } = Tabs;
+let newTabIndex = 0;
 
 const updateTreeData = (list, key, children) => {
   return list.map((node) => {
@@ -25,12 +28,64 @@ const updateTreeData = (list, key, children) => {
 
 export default function Project({initialData}) {
   const { data } = useSWR(URL, fetcher, { initialData });
-  const [codePath, updateCodePath] = useState("");
+  const [_, updateCodePath] = useState("");
   const [treeData, setTreeData] = useState(data);
+  const [panes, setPanes] = useState([]);
+  const [activeKey, setActiveKey] = useState();
+
+  const onChange = activeKey => {
+    setActiveKey(activeKey);
+  };
+
+  const onEdit = (targetKey, action) => {
+    remove(targetKey);
+  };
+
+  const add = node => {
+    const activeKey = `newTab${node.name}`;
+    const newPanes = panes;
+    let open = false;
+    panes.forEach(pane => {
+      if (pane.title === node.name) open = true;
+    });
+    if (!open) {
+      const title = (
+        <span>
+          <img src={IconMapping(node.name)} alt="js" style={{ width: 13, height: 13, margin: 5 }} />
+          {node.name}
+        </span>
+      ); 
+      newPanes.push({ title: title, content: node.url, key: activeKey });
+      setPanes(newPanes);
+      setActiveKey(activeKey);
+    }
+  };
+
+  const remove = targetKey => {
+    console.log(panes);
+    let lastIndex;
+    panes.forEach((pane, i) => {
+      if (pane.key === targetKey) {
+        lastIndex = i - 1;
+      }
+    });
+    const newPanes = panes.filter(pane => pane.key !== targetKey);
+    let newActiveKey;
+    if (newPanes.length && activeKey === targetKey) {
+      if (lastIndex >= 0) {
+        newActiveKey = newPanes[lastIndex].key;
+      } else {
+        newActiveKey = newPanes[0].key;
+      }
+    }
+    setPanes(newPanes);
+    setActiveKey(newActiveKey);
+    console.log(newPanes, activeKey);
+  };
+
 
   const onLoadData = async (node) => {
     const { key, children, url } = node;
-    console.log("onLoadData -> key", node);
     return new Promise(async (resolve) => {
       if (children) {
         resolve();
@@ -41,6 +96,7 @@ export default function Project({initialData}) {
       myChildren.map((file, index) => {
         if (file.type !== "dir") {
           file.isLeaf = true;
+          file.icon = <img src={IconMapping(file.name)} alt="js" style={{ width: 13, height: 13 }} />;
         } else {
           file.isLeaf = false;
         }
@@ -56,6 +112,7 @@ export default function Project({initialData}) {
   const onSelect = (keys, event) => {
     if (event.node.isLeaf) {
       updateCodePath(event.node.url);
+      add(event.node);
     }
   };
 
@@ -64,6 +121,7 @@ export default function Project({initialData}) {
       <Sider style={{ backgroundColor: "#0e0e0e" }}>
         <div className="logo" />
         <DirectoryTree
+          style={{ overflowY: "scroll", height: "100vh"}}
           loadData={onLoadData}
           treeData={treeData}
           onSelect={onSelect}
@@ -74,7 +132,7 @@ export default function Project({initialData}) {
           }
         `}</style>
       </Sider>
-      <Layout className="site-layout">
+      <Layout className="site-layout" style={{ backgroundColor: "#2d2d2d" }}>
         <Content
           style={{
             margin: "0",
@@ -82,7 +140,19 @@ export default function Project({initialData}) {
             backgroundColor: "#2d2d2d",
           }}
         >
-          <CodeRender url={codePath} />
+          <Tabs
+          hideAdd
+          onChange={onChange}
+          activeKey={activeKey}
+          type="editable-card"
+          onEdit={onEdit}
+        >
+          {panes.map(pane => (
+            <TabPane tab={pane.title} key={pane.key}>
+              <CodeRender url={pane.content} />
+            </TabPane>
+          ))}
+        </Tabs>
         </Content>
       </Layout>
     </Layout>
@@ -106,6 +176,7 @@ export async function getServerSideProps({query}) {
   data.map((file, index) => {
     if (file.type !== "dir") {
       file.isLeaf = true;
+      file.icon = <img src={IconMapping(file.name)} alt="js" style={{ width: 13, height: 13 }} />;
     } else {
       file.isLeaf = false;
     }
