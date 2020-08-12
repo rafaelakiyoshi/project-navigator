@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import fetcher from "../libs/fetcher";
 import useSWR from "swr";
 import { Layout, Tree, Tabs } from "antd";
@@ -9,7 +9,6 @@ import "./sider.less";
 const { DirectoryTree } = Tree;
 const { Content, Sider } = Layout;
 const { TabPane } = Tabs;
-let newTabIndex = 0;
 
 const updateTreeData = (list, key, children) => {
   return list.map((node) => {
@@ -32,6 +31,16 @@ export default function Project({initialData}) {
   const [treeData, setTreeData] = useState(data);
   const [panes, setPanes] = useState([]);
   const [activeKey, setActiveKey] = useState();
+
+  useEffect(() => {
+    const newTreeData = treeData;
+    newTreeData.forEach(data => {
+      console.log("oioi")
+      data.icon = data.isLeaf ? <img src={IconMapping(data.name)} alt="icon" style={{ width: 13, height: 13 }} /> : null
+    });
+    setTreeData(newTreeData);
+    console.log("UPDATED ", treeData);
+  }, []);
 
   const onChange = activeKey => {
     setActiveKey(activeKey);
@@ -176,7 +185,6 @@ export async function getServerSideProps({query}) {
   data.map((file, index) => {
     if (file.type !== "dir") {
       file.isLeaf = true;
-      file.icon = <img src={IconMapping(file.name)} alt="js" style={{ width: 13, height: 13 }} />;
     } else {
       file.isLeaf = false;
     }
